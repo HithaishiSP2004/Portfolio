@@ -1,0 +1,55 @@
+[build]
+  # No build step (pure static site)
+  publish = "."
+
+# --------------------------------
+# 1) SPA-style routing (optional but safe)
+#    Ensures all paths serve index.html
+# --------------------------------
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# --------------------------------
+# 2) Security Headers (all routes)
+# --------------------------------
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "geolocation=(), microphone=(), camera=()"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
+
+# --------------------------------
+# 3) Cache static assets (CSS, JS, images, PDF)
+# --------------------------------
+[[headers]]
+  for = "/style.css"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000"
+
+[[headers]]
+  for = "/script.js"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000"
+
+[[headers]]
+  for = "/profile.jpg"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000"
+
+[[headers]]
+  for = "/HithaishiSP_Resume.pdf"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000"
+
+# --------------------------------
+# 4) Make sure index.html is NOT heavily cached
+# --------------------------------
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-store, max-age=0"
