@@ -1,3 +1,30 @@
+// script.js
+// =======================================
+// Dark / Light Theme Toggle (Header Icon)
+// =======================================
+const rootEl = document.documentElement;
+const themeToggle = document.getElementById("theme-toggle");
+
+// Load saved theme
+const savedTheme = localStorage.getItem("theme");
+if (savedTheme) {
+  rootEl.setAttribute("data-theme", savedTheme);
+  if (themeToggle) {
+    themeToggle.textContent = savedTheme === "dark" ? "🌙" : "☀️";
+  }
+}
+
+// Toggle theme
+if (themeToggle) {
+  themeToggle.addEventListener("click", () => {
+    const currentTheme = rootEl.getAttribute("data-theme") || "dark";
+    const newTheme = currentTheme === "dark" ? "light" : "dark";
+    rootEl.setAttribute("data-theme", newTheme);
+    localStorage.setItem("theme", newTheme);
+    themeToggle.textContent = newTheme === "dark" ? "🌙" : "☀️";
+  });
+}
+
 // =======================================
 // Mobile Navigation Toggle
 // =======================================
@@ -150,6 +177,37 @@ document.addEventListener("DOMContentLoaded", () => {
 // Terminal Typing Animation
 // =======================================
 const terminalOutput = document.getElementById("terminal-output");
+// =======================================
+// Hidden Terminal Commands (Easter Egg)
+// =======================================
+const hiddenCommands = {
+  help: "Available commands: help, whoami, skills, projects, clear",
+  whoami: "Hithaishi S P — Cybersecurity Analyst | MCA Student",
+  skills: "Python, SIEM, Wireshark, AWS, Incident Response, SOC",
+  projects: "Ransomware Detection | Phishing Detection (ML)",
+};
+
+let commandBuffer = "";
+
+document.addEventListener("keydown", (e) => {
+  if (!terminalOutput) return;
+
+  if (e.key === "Enter") {
+    terminalOutput.innerHTML += `\n$ ${commandBuffer}\n`;
+
+    if (commandBuffer === "clear") {
+      terminalOutput.innerHTML = "";
+    } else {
+      terminalOutput.innerHTML +=
+        (hiddenCommands[commandBuffer] || "command not found") + "\n";
+    }
+
+    commandBuffer = "";
+  } else if (e.key.length === 1) {
+    commandBuffer += e.key;
+  }
+});
+
 const terminalLines = [
   "root@hithaishi:~$ booting SOC monitoring engine...",
   "[INFO] ingesting logs from AWS CloudTrail...",
@@ -166,6 +224,7 @@ let charIndexTerm = 0;
 let heroInView = true;
 let typingTimeoutId = null;
 let isTyping = false;
+let interactiveMode = false;
 
 /* Color formatting + blinking cursor */
 function renderTerminalText(rawText) {
@@ -188,12 +247,13 @@ function clearTypingTimeout() {
 }
 
 function typeStep() {
-  if (!terminalOutput || !heroInView) {
+  if (!terminalOutput || !heroInView || interactiveMode) {
     isTyping = false;
     return;
   }
 
   isTyping = true;
+
 
   // End of lines → pause 4 seconds → restart
   if (lineIndexTerm >= terminalLines.length) {
@@ -310,8 +370,15 @@ if (cursorCanvas) {
 
         ctx.beginPath();
         ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(8, 247, 163, ${alpha * 0.7})`;
+
+        const isLight = document.documentElement.getAttribute("data-theme") === "light";
+
+        ctx.fillStyle = isLight
+          ? `rgba(38, 164, 255, ${alpha * 0.7})`
+          : `rgba(8, 247, 163, ${alpha * 0.7})`;
+
         ctx.fill();
+
       });
 
       requestAnimationFrame(renderParticles);
@@ -351,4 +418,71 @@ if (heroCard) {
 const yearSpan = document.getElementById("year");
 if (yearSpan) {
   yearSpan.textContent = new Date().getFullYear();
+}
+// =======================================
+// Accessibility & Lighthouse Boost
+// =======================================
+
+// Reduced motion support
+if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  document.body.classList.add("reduce-motion");
+}
+
+// Disable heavy effects on mobile
+if (window.innerWidth < 768) {
+  const cursorCanvas = document.getElementById("cursor-canvas");
+  if (cursorCanvas) cursorCanvas.style.display = "none";
+}
+
+// Passive listeners for performance
+window.addEventListener("scroll", () => { }, { passive: true });
+window.addEventListener("touchstart", () => { }, { passive: true });
+// =======================================
+// Profile Image Overlay Logic
+// =======================================
+const avatar = document.querySelector(".clickable-avatar");
+const overlay = document.getElementById("avatar-overlay");
+const closeBtn = document.querySelector(".overlay-close"); // ← ADD HERE
+
+// Always start CLOSED
+if (overlay) {
+  overlay.classList.remove("open");
+  overlay.setAttribute("aria-hidden", "true");
+}
+
+if (avatar && overlay) {
+  avatar.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    overlay.classList.add("open");
+    overlay.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+  });
+
+  // Click outside image → close
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) closeAvatarOverlay();
+  });
+
+  // Close button (✕) handler
+  if (closeBtn) {
+    closeBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      closeAvatarOverlay();
+    });
+  }
+
+  // ESC key → close
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && overlay.classList.contains("open")) {
+      closeAvatarOverlay();
+    }
+  });
+}
+
+function closeAvatarOverlay() {
+  overlay.classList.remove("open");
+  overlay.setAttribute("aria-hidden", "true");
+  document.body.style.overflow = "";
 }
