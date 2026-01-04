@@ -184,29 +184,41 @@ const hiddenCommands = {
   help: "Available commands: help, whoami, skills, projects, clear",
   whoami: "Hithaishi S P — Cybersecurity Analyst | MCA Student",
   skills: "Python, SIEM, Wireshark, AWS, Incident Response, SOC",
-  projects: "Ransomware Detection | Phishing Detection (ML)",
+  projects: "Ransomware Detection | Phishing Detection (ML) | Mandya Mobility Hub",
 };
 
-let commandBuffer = "";
+const terminalInput = document.getElementById("terminal-input");
+if (terminalInput) {
+  terminalInput.disabled = false;
+}
 
-document.addEventListener("keydown", (e) => {
-  if (!terminalOutput) return;
+if (terminalInput && terminalOutput) {
+  terminalInput.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
 
-  if (e.key === "Enter") {
-    terminalOutput.innerHTML += `\n$ ${commandBuffer}\n`;
+    const cmd = terminalInput.value.trim();
+    if (!cmd) return;
 
-    if (commandBuffer === "clear") {
+    // STOP animation permanently once user types
+    clearTypingTimeout();
+    interactiveMode = true;
+
+    terminalOutput.innerHTML +=
+      `\n<span class="log-root">root@hithaishi:~$</span> ${cmd}\n`;
+
+    if (cmd === "clear") {
       terminalOutput.innerHTML = "";
     } else {
       terminalOutput.innerHTML +=
-        (hiddenCommands[commandBuffer] || "command not found") + "\n";
+        (hiddenCommands[cmd] || "command not found") + "\n";
     }
 
-    commandBuffer = "";
-  } else if (e.key.length === 1) {
-    commandBuffer += e.key;
-  }
-});
+    terminalInput.value = "";
+    terminalOutput.scrollTop = terminalOutput.scrollHeight;
+  });
+}
+
+
 
 const terminalLines = [
   "root@hithaishi:~$ booting SOC monitoring engine...",
@@ -252,7 +264,6 @@ function typeStep() {
     return;
   }
 
-  isTyping = true;
 
 
   // End of lines → pause 4 seconds → restart
@@ -293,20 +304,28 @@ function typeStep() {
 const heroSection = document.getElementById("hero");
 if (heroSection) {
   const heroObserver = new IntersectionObserver(
-    (entries) => {
-      const entry = entries[0];
-      if (entry.isIntersecting) {
-        heroInView = true;
-        if (!isTyping) typeStep();
-      } else {
-        heroInView = false;
-        clearTypingTimeout();
-        isTyping = false;
+  (entries) => {
+    const entry = entries[0];
+
+    if (entry.isIntersecting) {
+      heroInView = true;
+
+      // ONLY restart animation if user has NOT typed
+      if (!interactiveMode) {
+        terminalOutput.innerHTML = "";
+        lineIndexTerm = 0;
+        charIndexTerm = 0;
+        typeStep();
       }
-    },
-    { threshold: 0.5 }
-  );
-  heroObserver.observe(heroSection);
+    } else {
+      heroInView = false;
+      clearTypingTimeout();
+      isTyping = false;
+    }
+  },
+  { threshold: 0.5 }
+);
+
 
   // Start typing immediately on load (home in view)
   heroInView = true;
